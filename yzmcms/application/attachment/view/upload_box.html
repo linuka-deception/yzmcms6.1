@@ -1,0 +1,116 @@
+<?php include $this->admin_tpl('meta', 'admin');?>
+<link rel="stylesheet" href="<?php echo STATIC_URL;?>plugin/webuploader/webuploader.css"/>
+<title>附件上传 - YzmCMS内容管理系统</title>
+</head>
+<body>
+<div class="page-container">
+	<div id="tab_system" class="HuiTab">
+		<div class="tabBar cl"><span>上传文件</span><span>站内文件</span></div>
+		<div class="tabCon">
+			<span class="yzm-notice">类型:  <?php echo $type;?></span>
+			<span class="yzm-notice">单文件最大: <span class="c-red"><?php echo $s;?></span> ，数量: <span class="c-red"><?php echo $n;?></span>个</span>
+			<div id="fileList" class="yzm-uploader-list">
+			</div>
+			<div id="filePicker" class="yzm-upload-button">选择文件</div>
+			<div id="uploadlist" class="yzm-imagelist">
+				<ul>
+				</ul>
+			</div>
+		</div>
+
+		<div class="tabCon">
+			<div class="yzm-imagelist">
+				<ul>
+					<?php
+					foreach($data as $val){
+						$thum = $val['isimage'] ? $val['filepath'].$val['filename'] : (in_array($val['fileext'], array('zip', 'rar')) ? STATIC_URL.'images/ext/rar.png' : STATIC_URL.'images/ext/blank.png');
+						echo '<li><a href="javascript:;" onclick="javascript:album_cancel(this)" title="'.$val['originname'].'"><img class="img_src" src="'.$thum.'" path="'.$val['filepath'].$val['filename'].'"><img src="'.STATIC_URL.'images/checked.gif" class="checkd hidden"></a></li>';
+					}
+					?>
+				</ul>
+				<div class="clearfix"></div>
+				 <div id="page"><span class="page_left">共<?php echo $total?>条记录</span><span class="page_right"><?php echo $page->gethome().$page->getlist().$page->getend();?></span></div>
+			</div>
+		</div>
+	</div>
+	<div class="yzm-bottom-button">
+		<input type="button" class="btn btn-primary radius" id="determine" value="&nbsp;&nbsp;确定&nbsp;&nbsp;">
+		<input type="button" class="btn btn-default radius" id="cancel" value="&nbsp;&nbsp;取消&nbsp;&nbsp;">
+	</div>
+</div>
+<div id="att_status" class="hidden"></div>
+<div id="att_titles" class="hidden"></div>
+<?php include $this->admin_tpl('footer', 'admin');?>
+<script type="text/javascript">
+	var STATIC_URL = '<?php echo STATIC_URL;?>';
+	var $ = jQuery, $list = $('#fileList'), uploader;
+	var yzm_uploader_config = {
+	    auto: true,
+	    swf: STATIC_URL + 'plugin/ueditor/third-party/webuploader/Uploader.swf',
+	    server: '<?php echo U('upload');?>',
+	    pick: '#filePicker',
+	    fileNumLimit : <?php echo $n;?>,
+	    fileSingleSizeLimit : <?php echo 1024*get_config('upload_maxsize');?>,
+	    accept: {
+	    	<?php if($t==1){ ?>
+	        title: '图片',
+	        extensions: '<?php echo $type;?>',
+	        mimeTypes: 'image/*'
+	    	<?php }else{ ?>
+	    	extensions: '<?php echo $type;?>'
+	    	<?php } ?>
+	    },
+	    formData : {
+	        'filetype' : '<?php echo $t;?>',
+	        'module' : '<?php echo $module;?>',
+	    }
+	};
+
+$(function(){
+	
+	var index = parent.layer.getFrameIndex(window.name);
+	$('#determine').on('click', function(){
+		var att_status = $("#att_status").html();
+		var att_titles = $("#att_titles").html();
+		if(att_status == ''){
+			layer.alert('你还没选择附件呢？'); 
+			return false;
+		}
+		att_status = att_status.substr(1);		
+		att_titles = att_titles.substr(1);		
+		<?php
+			if($t == 1) echo 'if(!isimg(att_status)){ layer.alert("选择的类型必须为图片类型!"); return false;}';
+		?>
+		<?php if($n == 1) { ?>
+		
+		parent.$("#<?php echo $pid;?>").val(att_status);
+		parent.$("#<?php echo $pid;?>_src").attr("src", att_status);
+		
+		<?php }else{ ?>
+		
+		var string = '';
+		var strs, tits; 
+		strs = att_status.split("|");
+		tits = att_titles.split("|");
+		for (i=0;i<strs.length;i++ ){ 
+			string += '<li>文件：<input type="text" name="<?php echo $pid;?>[url][]" value="'+strs[i]+'" id="<?php echo $pid;?>_'+i+'" onMouseOver="yzm_img_preview(\'<?php echo $pid;?>_'+i+'\', this.value)"  onmouseout="layer.closeAll();" class="input-text yzm-input-url"> 描述：<input type="text" name="<?php echo $pid;?>[alt][]" value="'+tits[i]+'" class="input-text yzm-input-alt"><a href="javascript:;" class="secondary" onclick="yzm_move_li(this, 1);">上移</a> <a href="javascript:;" class="secondary" onclick="yzm_move_li(this, 0);">下移</a> <a href="javascript:;" class="danger" onclick="yzm_delete_li(this);">删除</a></li>';
+		} 
+		parent.$("#<?php echo $pid;?>").append(string);	
+		
+		<?php } ?>
+		parent.layer.close(index);
+	});	
+	
+	$('#cancel').on('click', function(){
+		parent.layer.close(index);
+	});
+	
+	$.Huitab("#tab_system .tabBar span","#tab_system .tabCon","current","click","<?php echo isset($_GET['tab']) ? intval($_GET['tab']) : '0'?>");
+});
+
+</script>
+<script type="text/javascript" src="<?php echo STATIC_URL;?>plugin/webuploader/webuploader.nolog.min.js"></script>
+<script type="text/javascript" src="<?php echo STATIC_URL;?>plugin/webuploader/yzm.upload.js"></script>
+
+</body>
+</html>
